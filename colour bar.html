@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>canvas应用</title>
+	<style>
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		html, body{
+			height: 100%;
+		}
+		canvas{
+			position: absolute;
+			top: 0px;
+			left: 50%;
+			-webkit-transform:translate(-50%);
+
+		}
+	</style>
+</head>
+<body>
+	<canvas id="mycanvas">
+		你的留言器不支持canvas！
+	</canvas>
+
+	<script>
+	(function(){
+
+		//下面定义常量
+		var WIDTH = Math.min(800,document.body.offsetWidth),
+			HEIGHT = Math.min(600,document.body.offsetHeight),
+			NUM = 20,//彩带的数量
+			RADIUS = 110,//radius--半径
+			RADIUS_SCALE = 1,//scale --比列
+	 		RADIUS_SCALE_MIN = 1,
+			RADIUS_SCALE_MAX = 1.5;
+
+			var lines = [];
+			var MouseX = window.innerWidth - WIDTH;
+			var MouseY = window.innerHeight - HEIGHT;
+			var oMycanvas = document.getElementById('mycanvas');
+			
+			var context = oMycanvas.getContext('2d');
+
+			window.onload = function(){
+				oMycanvas.width = WIDTH;
+				oMycanvas.height = HEIGHT;
+
+				
+				setInterval(function(){
+					render()
+				}, 25);
+				addLines();
+				document.addEventListener('mousemove', mouseMove,false);
+			}
+
+			
+			function render(){
+				 context.fillStyle = 'rgba(0,0,0,0.05)';//每次调用函数都能覆盖画布
+				 context.fillRect(0,0,WIDTH,HEIGHT);
+				 for(var i=0; i<NUM; i++){
+				 	var line = lines[i];
+				 	var lp = {x:line.position.x , y:line.position.y};
+				 	line.angle += line.speed;
+
+				 	line.shift.x += (MouseX - line.shift.x)*line.speed;//shift->移动
+					line.shift.y += (MouseY - line.shift.y)*line.speed;//线条跟随鼠标移动
+
+					line.position.x = line.shift.x + Math.cos(i + line.angle) * (line.orbit*RADIUS_SCALE);
+					line.position.y = line.shift.y + Math.sin(i + line.angle) * (line.orbit*RADIUS_SCALE);
+
+					line.position.x = Math.max( Math.min( line.position.x, WIDTH ), 0 );
+					line.position.y = Math.max( Math.min( line.position.y, HEIGHT ), 0 );//保证线条在画布范围内移动
+
+					line.size += ( line.targetSize - line.size ) * 0.1;
+
+					if( Math.round( line.size ) == Math.round( line.targetSize ) ) {
+						line.targetSize = 1 + Math.random() * 7;
+					}
+					//round(x)--把数四舍五入为最接近的整数。
+					context.beginPath();//开始路径绘制
+					context.fillStyle = line.fillColor;
+					context.strokeStyle = line.fillColor;//设置线颜色
+					context.lineWidth = line.size;//设置线条宽
+					context.moveTo(lp.x,lp.y);//设置路径起点
+					context.lineTo(line.position.x , line.position.y);
+					context.stroke();//进行线的着色，这时整条线才变得可见
+					context.arc(line.position.x , line.position.y , line.size/2 , 0, Math.PI*2,true);//绘制扇形
+					context.fill();
+
+					}
+			}
+
+			function addLines(){
+				for(var i=0; i<NUM; i++){
+					var aLine = {
+						position:{
+							x:MouseX,y:MouseY
+						},
+						shift:{
+							x:MouseX,y:MouseY
+						},
+						size:1.2,
+						angle:0,
+						speed:0.04 + Math.random()*0.06,
+						targetSize:1.2,
+						orbit:RADIUS*0.5 + Math.random()*0.5*RADIUS,
+						fillColor:'#' + (Math.random()*0x404040 +  0xaaaaaa | 0).toString(16)
+
+					}
+					lines.push(aLine);
+				}
+			}
+				 
+			function mouseMove(event){
+				MouseX = event.clientX - (window.innerWidth - WIDTH)/2;
+				MouseY = event.clientY - (window.innerHeight - HEIGHT)/2;
+			}
+
+
+	})();
+		
+
+	</script>
+</body>
+</html>
